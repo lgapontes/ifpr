@@ -144,6 +144,14 @@
           let div = document.querySelector('div.mensagem');
           div.style.display = 'none';
         }
+        function registroNaoEncontrado(ul) {
+          let li = document.createElement('li');
+          let span = document.createElement('span');
+          span.classList.add('afazer');
+          span.innerHTML = "Nenhum registro encontrado!";
+          li.appendChild(span);
+          ul.appendChild(li);
+        }
 
         function exibirAfazer(afazer,ul) {
           let li = document.createElement('li');
@@ -164,6 +172,7 @@
           aExcluir.addEventListener('click', event=> {
             let uuid = event.target.parentNode.parentNode.querySelector('span.uuid').textContent;
 
+            // Apagar
             fetch('http://127.0.0.1/afazer/' + uuid, {
               method: 'DELETE'
             }).then(response => {
@@ -197,6 +206,8 @@
         }
 
         function exibirAfazeres() {
+
+          // Consultar
           fetch('http://127.0.0.1/afazeres')
           .then(response => response.json())
           .then(data => {
@@ -204,19 +215,14 @@
             ul.innerHTML = '';
 
             if (data.length == 0) {
-              let li = document.createElement('li');
-              let span = document.createElement('span');
-              span.classList.add('afazer');
-              span.innerHTML = "Nenhum registro encontrado!";
-              li.appendChild(span);
-              ul.appendChild(li);
+              registroNaoEncontrado(ul);
             } else {
               data.forEach(afazer => {
                 exibirAfazer(afazer,ul);
               });
             }
-
           });
+
         }
 
         function limparForm() {
@@ -258,7 +264,7 @@
               headers: { "Content-Type": "application/json; charset=utf-8" },
               method: 'POST',
               body: JSON.stringify(afazer)
-            }).then(response => {              
+            }).then(response => {
               if (response.status == 400) {
                 exibirMensagem('Afazer deve ser um texto com no máximo 20 caracteres!');
               } else {
