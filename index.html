@@ -1,0 +1,277 @@
+<!DOCTYPE HTML>
+<html lang="pt-BR">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" type="image/png" href="favicon.ico" />
+        <style>
+          body {
+            max-width: 400px;
+            margin: 0 auto;
+          }
+          header {
+            display: block;
+            box-sizing: border-box;
+            padding: 5px;
+            font-size: 2em;
+            font-weight: bold;
+            color: #ffffff;
+            background-color: #01579b;
+          }
+
+          div.mensagem {
+            display: none;
+            box-sizing: border-box;
+            padding: 5px;
+            font-size: 1em;
+            font-weight: bold;
+            color: #ffffff;
+            background-color: #e65100;
+          }
+          div.exibir {
+            display: block;
+          }
+
+          form {
+            display: block;
+            box-sizing: border-box;
+            padding: 5px;
+            background-color: #0091ea;
+          }
+          form::after {
+            content: '';
+            display: block;
+            height: 0;
+            clear: both;
+          }
+          form input[type=text]{
+            font-size: 1em;
+            width: 250px;
+            display: block;
+            float: left;
+          }
+          form button[type=submit]{
+            font-size: 1em;
+            width: 80px;
+            display: block;
+            float: right;
+          }
+
+          ul.consulta {
+            display: block;
+            list-style-type:none;
+            margin-block-start: 0;
+            margin-block-end: 0;
+            margin-inline-start: 0;
+            margin-inline-end: 0;
+            padding-inline-start: 0;
+            margin: 0;
+          }
+          ul.consulta::after {
+            content: '';
+            display: block;
+            height: 0;
+            clear: both;
+          }
+          ul.consulta li {
+            display: block;
+            box-sizing: border-box;
+            padding: 5px;
+            border: 1px solid #01579b;
+          }
+          ul.consulta li::after {
+            content: '';
+            display: block;
+            height: 0;
+            clear: both;
+          }
+          ul.consulta li span.uuid {
+            display: block;
+            color: #0091ea;
+            font-size: 0.8em;
+          }
+          ul.consulta li span.afazer {
+            display: block;
+            float: left;
+            color: #01579b;
+            font-weight: bold;
+            font-size: 1.2em;
+          }
+          ul.consulta li span.links {
+            display: block;
+            float: right;
+            color: #263238;
+            font-size: 1em;
+          }
+          ul.consulta li span.links a {
+            color: #455a64;
+            font-size: 1em;
+            text-decoration: underline;
+            padding-left: 5px;
+          }
+        </style>
+    </head>
+    <body>
+      <header>
+        Lista de Afazeres
+      </header>
+      <div class="mensagem"></div>
+      <form id="cadastro">
+        <input name="uuid" type="hidden">
+        <input name="afazer" type="text" placeholder="Novo afazer" maxlength="20">
+        <button type="submit">Salvar</button>
+      </form>
+      <ul class="consulta">
+        <!--
+        <li>
+          <span class="uuid">d7f61b93-37cc-421f-8d28-122bec6e3100</span>
+          <span class="afazer">Lavar o carro</span>
+          <span class="links">
+            <a hred="#">Excluir</a>
+            <a hred="#">Alterar</a>
+          </span>
+        </li>
+        -->
+      </ul>
+
+      <script>
+        function exibirMensagem(mensagem) {
+          let div = document.querySelector('div.mensagem');
+          div.innerHTML = mensagem;
+          div.style.display = 'block';
+        }
+        function esconderMensagem() {
+          let div = document.querySelector('div.mensagem');
+          div.style.display = 'none';
+        }
+
+        function exibirAfazer(afazer,ul) {
+          let li = document.createElement('li');
+
+          let spanUuid = document.createElement('span');
+          spanUuid.classList.add('uuid');
+          spanUuid.innerHTML = afazer.uuid;
+          li.appendChild(spanUuid);
+
+          let spanAfazer = document.createElement('span');
+          spanAfazer.classList.add('afazer');
+          spanAfazer.innerHTML = afazer.afazer;
+          li.appendChild(spanAfazer);
+
+          let aExcluir = document.createElement('a');
+          aExcluir.href="#";
+          aExcluir.innerHTML="Excluir";
+          aExcluir.addEventListener('click', event=> {
+            let uuid = event.target.parentNode.parentNode.querySelector('span.uuid').textContent;
+
+            fetch('http://127.0.0.1/afazer/' + uuid, {
+              method: 'DELETE'
+            }).then(response => {
+              if (response.status == 404) {
+                exibirMensagem('Registro não encontrado!');
+              } else {
+                exibirMensagem('Registro excluído com sucesso!');
+                exibirAfazeres();
+              }
+            });
+
+          });
+
+          let aAlterar = document.createElement('a');
+          aAlterar.href="#";
+          aAlterar.innerHTML="Alterar";
+          aAlterar.addEventListener('click', event=> {
+            let li = event.target.parentNode.parentNode;
+            let form = document.getElementById('cadastro');
+            form.uuid.value = li.querySelector('span.uuid').textContent;
+            form.afazer.value = li.querySelector('span.afazer').textContent;
+          });
+
+          let spanLinks = document.createElement('span');
+          spanLinks.classList.add('links');
+          spanLinks.appendChild(aExcluir);
+          spanLinks.appendChild(aAlterar);
+          li.appendChild(spanLinks);
+
+          ul.appendChild(li);
+        }
+
+        function exibirAfazeres() {
+          fetch('http://127.0.0.1/afazeres')
+          .then(response => response.json())
+          .then(data => {
+            let ul = document.querySelector('ul.consulta');
+            ul.innerHTML = '';
+
+            if (data.length == 0) {
+              let li = document.createElement('li');
+              let span = document.createElement('span');
+              span.classList.add('afazer');
+              span.innerHTML = "Nenhum registro encontrado!";
+              li.appendChild(span);
+              ul.appendChild(li);
+            } else {
+              data.forEach(afazer => {
+                exibirAfazer(afazer,ul);
+              });
+            }
+
+          });
+        }
+
+        function limparForm() {
+          let form = document.getElementById('cadastro');
+          form.uuid.value = '';
+          form.afazer.value = '';
+        }
+
+        document.getElementById('cadastro').addEventListener('submit', event => {
+          event.preventDefault();
+          let afazer = {
+            uuid: event.target.uuid.value,
+            afazer: event.target.afazer.value
+          };
+
+          if  ( (afazer.uuid) && (afazer.uuid != '') ) {
+
+            // Atualizar
+            fetch('http://127.0.0.1/afazer/' + afazer.uuid, {
+              headers: { "Content-Type": "application/json; charset=utf-8" },
+              method: 'PUT',
+              body: JSON.stringify(afazer)
+            }).then(response => {
+              if (response.status == 400) {
+                exibirMensagem('Afazer deve ser um texto com no máximo 20 caracteres!');
+              } else if (response.status == 404) {
+                exibirMensagem('Registro não encontrado!');
+              } else {
+                esconderMensagem();
+                exibirAfazeres();
+                limparForm();
+              }
+            });
+
+          } else {
+
+            // Inserir
+            fetch('http://127.0.0.1/afazer', {
+              headers: { "Content-Type": "application/json; charset=utf-8" },
+              method: 'POST',
+              body: JSON.stringify(afazer)
+            }).then(response => {              
+              if (response.status == 400) {
+                exibirMensagem('Afazer deve ser um texto com no máximo 20 caracteres!');
+              } else {
+                esconderMensagem();
+                exibirAfazeres();
+                limparForm();
+              }
+            });
+
+          }
+        });
+
+        exibirAfazeres();
+      </script>
+    </body>
+</html>
